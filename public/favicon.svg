@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="SellerBuz">
+  <title>SellerBuz — Your Selling Machine</title>
+  <!-- bag handle -->
+  <path d="M35 36 V27 a15 15 0 0 1 30 0 v9" fill="none" stroke="#F97316" stroke-width="8.5" stroke-linecap="round"/>
+  <!-- bag body -->
+  <path d="M24 30 H76 C84 30 90 36 90 44 V79 C90 87 84 93 76 93 H24 C16 93 10 87 10 79 V44 C10 36 16 30 24 30 Z" fill="#132A5C"/>
+  <!-- S monogram -->
+  <path d="M61 49 H47 C42.6 49 39 52.6 39 57 C39 61.4 42.6 65 47 65 H53 C57.4 65 61 68.6 61 73 C61 77.4 57.4 81 53 81 H39" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- growth bars -->
+  <rect x="66" y="71" width="5" height="13" rx="1.5" fill="#15803D"/>
+  <rect x="73" y="64" width="5" height="20" rx="1.5" fill="#16A34A"/>
+  <rect x="80" y="56" width="5" height="28" rx="1.5" fill="#22C55E"/>
+  <!-- orange growth swoosh -->
+  <path d="M8 88 C 32 96 58 90 73 62 C 76 56 80 49 84 43" fill="none" stroke="#F97316" stroke-width="6.5" stroke-linecap="round"/>
+  <polygon points="94,31 77,36 86,49" fill="#F97316"/>
+</svg>

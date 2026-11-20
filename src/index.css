@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Sora", "Inter", sans-serif;
+
+  /* SellerBuz brand palette */
+  --color-navy-950: #0B1220;
+  --color-navy-900: #111A2E;
+  --color-navy-800: #132A5C;
+
+  --color-brand-50: #EFF4FC;
+  --color-brand-100: #DBE7F7;
+  --color-brand-200: #B9CCEE;
+  --color-brand-300: #8DADDE;
+  --color-brand-400: #5A80C4;
+  --color-brand-500: #365CA3;
+  --color-brand-600: #1D4080;
+  --color-brand-700: #163367;
+  --color-brand-800: #132A5C;
+  --color-brand-900: #0E1F45;
+  --color-brand-950: #081428;
+
+  --color-accent-50: #FFF5EB;
+  --color-accent-100: #FFE7D1;
+  --color-accent-200: #FFC9A3;
+  --color-accent-300: #FDA46B;
+  --color-accent-400: #FB8135;
+  --color-accent-500: #F97316;
+  --color-accent-600: #E85D06;
+  --color-accent-700: #C24405;
+  --color-accent-800: #9A380D;
+  --color-accent-900: #7C300E;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+.font-display { font-family: var(--font-display); }
+
+/* subtle grid bg */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(15 23 42 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(15 23 42 / 0.045) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+@media (min-width: 640px) {
+  .bg-grid { background-size: 44px 44px; }
+}
+
+.bg-grid-dark {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+@media (min-width: 640px) {
+  .bg-grid-dark { background-size: 44px 44px; }
+}
+
+/* range slider with comfortable touch target */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #4F46E5 0%, #4F46E5 var(--fill, 10%), #E2E8F0 var(--fill, 10%), #E2E8F0 100%);
+  outline: none;
+  touch-action: pan-y;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #4F46E5;
+  box-shadow: 0 4px 14px rgb(79 70 229 / 0.35);
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
+input[type="range"]::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #4F46E5;
+  box-shadow: 0 4px 14px rgb(79 70 229 / 0.35);
+  cursor: pointer;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes floatY {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-fadeUp { animation: fadeUp .7s cubic-bezier(.22,1,.36,1) both; }
+.animate-fadeIn { animation: fadeIn .5s ease both; }
+.animate-popIn { animation: popIn .45s cubic-bezier(.22,1,.36,1) both; }
+.animate-floatY { animation: floatY 5s ease-in-out infinite; }
+
+.delay-100 { animation-delay: .1s; }
+.delay-200 { animation-delay: .2s; }
+.delay-300 { animation-delay: .3s; }
+.delay-400 { animation-delay: .4s; }
+
+/* custom scrollbar for table & tabs */
+.table-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll::-webkit-scrollbar { height: 6px; }
+.table-scroll::-webkit-scrollbar-track { background: #F1F5F9; }
+.table-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 999px; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.pb-safe {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
