@@ -1,93 +1,67 @@
-# SellerBuz — Auto Deploy (GitHub Actions → VPS)
+# SellerBuz — Auto Deploy (VPS webhook)
 
-`main` ব্রাঞ্চে push করলেই GitHub Actions অ্যাপটা build করে `dist/` আপনার VPS-এ
-rsync করে দেয়। ওয়ার্কফ্লো: [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)
+`main` ব্রাঞ্চে push করলে GitHub আপনার VPS-এর একটা endpoint-এ POST পাঠায়;
+VPS-এর ছোট্ট listener সিগনেচার যাচাই করে `deploy.sh` চালায় →
+`git pull → npm ci → npm run build → publish → nginx reload`।
+কোনো GitHub Actions/বিলিং লাগে না।
 
-একবারই নিচের সেটআপ করতে হবে।
-
----
-
-## 1. VPS: nginx + web root (একবার)
-
-```bash
-sudo apt update && sudo apt install -y nginx rsync
-sudo mkdir -p /var/www/sellerbuz
-sudo chown -R $USER:$USER /var/www/sellerbuz
-```
-
-nginx site config (`your-domain.com` বদলান) — `/etc/nginx/sites-available/sellerbuz`:
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com www.your-domain.com;
-    root /var/www/sellerbuz;
-    index index.html;
-    location / { try_files $uri $uri/ /index.html; }
-    gzip on;
-    gzip_types text/css application/javascript image/svg+xml;
-}
-```
-
-```bash
-sudo ln -s /etc/nginx/sites-available/sellerbuz /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-HTTPS (DNS পয়েন্ট করার পর):
-
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com
-```
+ফাইলসমূহ:
+- `deploy/webhook.js` — Node listener (built-in মডিউল, কোনো dependency নেই)
+- `deploy/deploy.sh` — build ও publish স্ক্রিপ্ট
+- `deploy/sellerbuz-webhook.service` — systemd service
+- `deploy/nginx.conf` — nginx সাইট কনফিগ (রেফারেন্স)
 
 ---
 
-## 2. Deploy এর জন্য SSH key (একবার)
-
-CI যেন VPS-এ লগইন করতে পারে, তার জন্য একটা আলাদা keypair:
+## VPS one-time setup
 
 ```bash
-# নিজের ল্যাপটপে বা VPS-এ চালান
-ssh-keygen -t ed25519 -C "github-actions-sellerbuz" -f ./deploy_key -N ""
+# Node আছে কিনা
+node -v || { curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt install -y nodejs; }
+apt install -y git rsync nginx
+
+# কোড + স্ক্রিপ্ট
+git clone https://github.com/hanif865/SellerBuz.git /var/www/sellerbuz-src
+mkdir -p /opt/sellerbuz
+cp /var/www/sellerbuz-src/deploy/webhook.js /opt/sellerbuz/
+cp /var/www/sellerbuz-src/deploy/deploy.sh /opt/sellerbuz/
+chmod +x /opt/sellerbuz/deploy.sh
+
+# secret (GitHub webhook-এর secret-এর সাথে হুবহু মিলতে হবে)
+echo "WEBHOOK_SECRET=PASTE_SECRET_HERE" > /opt/sellerbuz/webhook.env
+chmod 600 /opt/sellerbuz/webhook.env
+
+# systemd service
+cp /var/www/sellerbuz-src/deploy/sellerbuz-webhook.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now sellerbuz-webhook
+
+# firewall (ufw সক্রিয় থাকলে)
+ufw allow 9777/tcp || true
+
+# প্রথম deploy ম্যানুয়ালি
+bash /opt/sellerbuz/deploy.sh
 ```
 
-Public key টা VPS-এর deploy ইউজারে authorize করুন:
-
-```bash
-# deploy_key.pub এর কনটেন্ট VPS-এর ~/.ssh/authorized_keys এ যোগ করুন
-cat deploy_key.pub >> ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/authorized_keys
-```
-
-Private key (`deploy_key` ফাইলের **পুরো** কনটেন্ট) পরের ধাপে GitHub secret-এ বসবে।
-> ⚠️ private key (`deploy_key`) কখনো রিপোতে commit করবেন না।
+লগ দেখা: `journalctl -u sellerbuz-webhook -f`
 
 ---
 
-## 3. GitHub Secrets (একবার)
+## GitHub webhook
 
-রিপোতে: **Settings → Secrets and variables → Actions → New repository secret**
+Repo → **Settings → Webhooks → Add webhook**
+- Payload URL: `http://<VPS_IP>:9777/deploy`
+- Content type: `application/json`
+- Secret: উপরের `WEBHOOK_SECRET`
+- Events: Just the `push` event
 
-| Secret name | মান (উদাহরণ) |
-|-------------|--------------|
-| `VPS_HOST`    | VPS-এর IP বা হোস্টনেম, যেমন `203.0.113.10` |
-| `VPS_PORT`    | SSH পোর্ট, সাধারণত `22` |
-| `VPS_USER`    | যে ইউজার দিয়ে লগইন, যেমন `deploy` বা `root` |
-| `VPS_SSH_KEY` | `deploy_key` ফাইলের পুরো কনটেন্ট (`-----BEGIN ... END-----` সহ) |
-| `VPS_TARGET`  | web root, যেমন `/var/www/sellerbuz` |
-
-> `VPS_USER` যদি `root` না হয়, তাহলে ওই ইউজারের `VPS_TARGET` ফোল্ডারে লেখার permission থাকতে হবে
-> (ধাপ ১-এ `chown` করা হয়েছে)।
+(অথবা `gh api` দিয়ে স্ক্রিপ্টেড তৈরি — মূল সেটআপ চ্যাটে দেখুন।)
 
 ---
 
-## 4. ব্যস — এবার push করলেই deploy
+## HTTPS + ডোমেইন (ঐচ্ছিক, পরে)
 
 ```bash
-git add . && git commit -m "deploy" && git push origin main
+apt install -y certbot python3-certbot-nginx
+certbot --nginx -d your-domain.com -d www.your-domain.com
 ```
-
-GitHub রিপোর **Actions** ট্যাবে build/deploy লাইভ দেখা যাবে। শেষ হলে সাইট আপডেট।
-ম্যানুয়ালি চালাতে চাইলে: Actions → "Build & Deploy to VPS" → **Run workflow**।

@@ -1,0 +1,17 @@
+[Unit]
+Description=SellerBuz GitHub webhook deploy listener
+After=network.target
+
+[Service]
+Type=simple
+Environment=PORT=9777
+Environment=DEPLOY_BRANCH=main
+Environment=DEPLOY_SCRIPT=/opt/sellerbuz/deploy.sh
+EnvironmentFile=/opt/sellerbuz/webhook.env
+ExecStart=/usr/bin/node /opt/sellerbuz/webhook.js
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target
